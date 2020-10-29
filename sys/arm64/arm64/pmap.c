@@ -1404,10 +1404,11 @@ pmap_kextract(vm_offset_t va)
 void
 pmap_kenter(vm_offset_t sva, vm_size_t size, vm_paddr_t pa, int mode)
 {
-	pd_entry_t *pde;
+	pd_entry_t *pde, old_pde;
 	pt_entry_t *pte, attr;
 	vm_offset_t va;
 	int lvl;
+	vm_page_t mpte;
 
 	KASSERT((pa & L3_OFFSET) == 0,
 	   ("pmap_kenter: Invalid physical address"));
@@ -1417,16 +1418,30 @@ pmap_kenter(vm_offset_t sva, vm_size_t size, vm_paddr_t pa, int mode)
 	    ("pmap_kenter: Mapping is not page-sized"));
 
 	attr = ATTR_DEFAULT | ATTR_S1_AP(ATTR_S1_AP_RW) | ATTR_S1_XN |
-	    ATTR_S1_IDX(mode) | L3_PAGE;
+	    ATTR_S1_IDX(mode);
 	va = sva;
 	while (size != 0) {
 		pde = pmap_pde(kernel_pmap, va, &lvl);
 		KASSERT(pde != NULL,
 		    ("pmap_kenter: Invalid page entry, va: 0x%lx", va));
 		KASSERT(lvl == 2, ("pmap_kenter: Invalid level %d", lvl));
+		
+		if (size >= L2_SIZE && (pa & L2_OFFSET) == 0 && (va & L2_OFFSET) == 0)
+		{
+			old_pde = pmap_load_store(pde, (pa & ~L2_OFFSET) | attr | L2_BLOCK);
+			PMAP_LOCK(kernel_pmap);
+			mpte = PHYS_TO_VM_PAGE(old_pde & ~ATTR_MASK);
+			pmap_insert_pt_page(kernel_pmap, mpte, false);
+			PMAP_UNLOCK(kernel_pmap);
+			
+			va += L2_SIZE;
+			pa += L2_SIZE;
+			size -= L2_SIZE;
+			continue;
+		} 
 
 		pte = pmap_l2_to_l3(pde, va);
-		pmap_load_store(pte, (pa & ~L3_OFFSET) | attr);
+		pmap_load_store(pte, (pa & ~L3_OFFSET) | attr | L3_PAGE);
 
 		va += PAGE_SIZE;
 		pa += PAGE_SIZE;
@@ -2788,7 +2803,8 @@ pmap_remove_l2(pmap_t pmap, pt_entry_t *l2, vm_offset_t sva,
 
 	if (old_l2 & ATTR_SW_WIRED)
 		pmap->pm_stats.wired_count -= L2_SIZE / PAGE_SIZE;
-	pmap_resident_count_dec(pmap, L2_SIZE / PAGE_SIZE);
+	pmap_resident_count_dec(pmap, L2_SIZE / 
+);
 	if (old_l2 & ATTR_SW_MANAGED) {
 		CHANGE_PV_LIST_LOCK_TO_PHYS(lockp, old_l2 & ~ATTR_MASK);
 		pvh = pa_to_pvh(old_l2 & ~ATTR_MASK);
