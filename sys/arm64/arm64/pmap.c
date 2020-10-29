@@ -405,6 +405,7 @@ static void _pmap_unwire_l3(pmap_t pmap, vm_offset_t va, vm_page_t m,
     struct spglist *free);
 static int pmap_unuse_pt(pmap_t, vm_offset_t, pd_entry_t, struct spglist *);
 static __inline vm_page_t pmap_remove_pt_page(pmap_t pmap, vm_offset_t va);
+static int pmap_insert_pt_page(pmap_t pmap, vm_page_t mpte, bool promoted);
 
 /*
  * These load the old table data and store the new value.
