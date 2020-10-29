@@ -2803,8 +2803,8 @@ pmap_remove_l2(pmap_t pmap, pt_entry_t *l2, vm_offset_t sva,
 
 	if (old_l2 & ATTR_SW_WIRED)
 		pmap->pm_stats.wired_count -= L2_SIZE / PAGE_SIZE;
-	pmap_resident_count_dec(pmap, L2_SIZE / 
-);
+	pmap_resident_count_dec(pmap, L2_SIZE / PAGE_SIZE);
+
 	if (old_l2 & ATTR_SW_MANAGED) {
 		CHANGE_PV_LIST_LOCK_TO_PHYS(lockp, old_l2 & ~ATTR_MASK);
 		pvh = pa_to_pvh(old_l2 & ~ATTR_MASK);
