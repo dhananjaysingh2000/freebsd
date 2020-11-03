@@ -1469,7 +1469,6 @@ pmap_kremove(vm_offset_t va)
 
 	pte = pmap_pte(kernel_pmap, va, &lvl);
 	KASSERT(pte != NULL, ("pmap_kremove: Invalid address"));
-	KASSERT(lvl == 3, ("pmap_kremove: Invalid pte level %d", lvl));
 
 	pmap_clear(pte);
 	pmap_invalidate_page(kernel_pmap, va);
