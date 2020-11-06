@@ -341,7 +341,7 @@ SYSCTL_INT(_vm_pmap_vmid, OID_AUTO, epoch, CTLFLAG_RD, &vmids.asid_epoch, 0,
 
 void (*pmap_clean_stage2_tlbi)(void);
 void (*pmap_invalidate_vpipt_icache)(void);
-static void pmap_remove_kernel_l2(pmap_t pmap, pt_entry_t *l2, vm_offset_t va)
+static void pmap_remove_kernel_l2(pmap_t pmap, pt_entry_t *l2, vm_offset_t va);
 
 /*
  * A pmap's cookie encodes an ASID and epoch number.  Cookies for reserved
