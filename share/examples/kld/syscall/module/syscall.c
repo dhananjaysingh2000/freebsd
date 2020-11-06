@@ -46,7 +46,7 @@ hello(struct thread *td, void *arg)
 	printf("hello kernel! Testing from Dhananjay\n");
 	return (0);
 }
-!
+
 /*
  * The `sysent' for the new syscall
  */
