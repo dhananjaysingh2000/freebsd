@@ -1472,6 +1472,8 @@ pmap_kremove(vm_offset_t va)
 
 	pmap_clear(pte);
 	pmap_invalidate_page(kernel_pmap, va);
+	// Test to see level, if level = 2 and not three, call pmap_remove_kernel_l2
+	pmap_remove_kernel_l2(kernel_pmap, pte, va);
 }
 
 void
