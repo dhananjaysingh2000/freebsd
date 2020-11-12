@@ -56,7 +56,9 @@ hello(struct thread *td, void *arg)
 
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK, &addrp);
 	m = vm_page_alloc_contig(NULL, 0, pflags, size/4096, 0, ~(vm_paddr_t) 0, alignment, 0, VM_MEMATTR_DEFAULT);
-	printf("hello kernel! Testing from Dhananjay\n");
+	
+	pmap_kenter(addrp, size, VM_PAGE_TO_PHYS(m), VM_MEMATTR_DEFAULT);
+	printf("hello kernel! Testing from Dhananjay. ADDRESS = %lx\n", addrp);
 	return (0);
 }
 
