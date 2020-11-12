@@ -51,7 +51,6 @@ hello(struct thread *td, void *arg)
  * The `sysent' for the new syscall
  */
 static struct sysent hello_sysent = {
-	0,			/* sy_narg */
 	hello			/* sy_call */
 };
 
