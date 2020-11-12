@@ -35,6 +35,7 @@
 #include <sys/sysent.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/vmem.h>
 
 /*
  * The function for implementing the syscall.
@@ -42,7 +43,15 @@
 static int
 hello(struct thread *td, void *arg)
 {
+	int rv;
+  	vmem_size_t size = 2*1024*1024; // 2 MB
+	vmem_size_t alignment = 2*1024*1024; // 2MB Super Page
+	vmem_addr_t addrp; // The address where the memeory is allocated
+	vm_page_t m;
+	int pflags = VM_ALLOC_NORMAL;
 
+	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK, &addrp);
+	m = vm_page_alloc_contig(NULL, 0, pflags, size/4096, 0, ~(vm_paddr_t) 0, alignment, 0, VM_ATTR_DEFAULT);
 	printf("hello kernel! Testing from Dhananjay\n");
 	return (0);
 }
