@@ -55,7 +55,7 @@ hello(struct thread *td, void *arg)
 	int pflags = VM_ALLOC_NORMAL;
 
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK, &addrp);
-	m = vm_page_alloc_contig(NULL, 0, pflags, size/4096, 0, ~(vm_paddr_t) 0, alignment, 0, VM_ATTR_DEFAULT);
+	m = vm_page_alloc_contig(NULL, 0, pflags, size/4096, 0, ~(vm_paddr_t) 0, alignment, 0, VM_MEMATTR_DEFAULT);
 	printf("hello kernel! Testing from Dhananjay\n");
 	return (0);
 }
