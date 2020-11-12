@@ -36,6 +36,10 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/vmem.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <vm/pmap.h>
 
 /*
  * The function for implementing the syscall.
