@@ -52,14 +52,14 @@ hello(struct thread *td, void *arg)
 	vmem_size_t alignment = 2*1024*1024; // 2MB Super Page
 	vmem_addr_t addrp; // The address where the memeory is allocated
 	vm_page_t m;
-	int pflags = VM_ALLOC_NORMAL;
+	int pflags = VM_ALLOC_NORMAL | VM_ALLOC_NOOBJ;
 
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
 	
 	if (rv != 0) {
 		printf("virtual memory allocation failed../");
 		return 1;
-}
+	}
 
 	m = vm_page_alloc_contig(NULL, 0, pflags, size/4096, 0, ~(vm_paddr_t) 0, alignment, 0, VM_MEMATTR_DEFAULT);
 
