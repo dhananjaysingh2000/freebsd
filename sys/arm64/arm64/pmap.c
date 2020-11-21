@@ -1440,8 +1440,12 @@ pmap_kenter(vm_offset_t sva, vm_size_t size, vm_paddr_t pa, int mode)
 			pa += L2_SIZE;
 			size -= L2_SIZE;
 			continue;
-		} 
-
+		} else if (size >= 64*1024 && (pa & (64*1024 - 1)) == 0 && (va & (64*1024 - 1)) == 0) {
+			attr |= ATTR_CONTIGUOUS; // To show that there are 16 4kb entries for a 64kb mapping
+			                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+		} else if ( (attr & ATTR_CONTIGUOUS) != 0 && (va & (64*1024 - 1) == 0) {
+			attr &= ~ATTR_CONTIGUOUS;
+		}
 		pte = pmap_l2_to_l3(pde, va);
 		pmap_load_store(pte, (pa & ~L3_OFFSET) | attr | L3_PAGE);
 
