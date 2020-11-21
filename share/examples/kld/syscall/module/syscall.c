@@ -48,8 +48,8 @@ static int
 hello(struct thread *td, void *arg)
 {
 	int rv;
-  	vmem_size_t size = 2*1024*1024; // 2 MB
-	vmem_size_t alignment = 2*1024*1024; // 2MB Super Page
+  	vmem_size_t size = 64*1024; // 64 KB
+	vmem_size_t alignment = 64*1024; // 64KB Super Page
 	vmem_addr_t addrp; // The address where the memeory is allocated
 	vm_page_t m;
 	int pflags = VM_ALLOC_NORMAL | VM_ALLOC_NOOBJ;
@@ -70,9 +70,10 @@ hello(struct thread *td, void *arg)
 
 	pmap_kenter(addrp, size, VM_PAGE_TO_PHYS(m), VM_MEMATTR_DEFAULT);
 	printf("hello kernel! Testing from Dhananjay. ADDRESS = %lx\n", addrp);
+#if 0
 	pmap_kremove(addrp);
 	printf("pmap_kremove() called\n");
-	
+
 	for (int i = 0; i < size/4096; i++) {	
 		vm_page_free(m + i);
 	}
@@ -80,6 +81,8 @@ hello(struct thread *td, void *arg)
 
 	// TODO: VMEM_XFREE CALL
 	vmem_xfree(kernel_arena, addrp, size);
+	printf("vmem_xfree() called\n");
+#endif
 
 	return (0);
 }
