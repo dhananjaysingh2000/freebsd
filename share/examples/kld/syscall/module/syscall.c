@@ -71,12 +71,15 @@ hello(struct thread *td, void *arg)
 	pmap_kenter(addrp, size, VM_PAGE_TO_PHYS(m), VM_MEMATTR_DEFAULT);
 	printf("hello kernel! Testing from Dhananjay. ADDRESS = %lx\n", addrp);
 	pmap_kremove(addrp);
-	printf("pmap_kremove() called");
+	printf("pmap_kremove() called\n");
 	
 	for (int i = 0; i < size/4096; i++) {	
 		vm_page_free(m + i);
 	}
-	printf("vm_page_free() called");
+	printf("vm_page_free() called\n");
+
+	// TODO: VMEM_XFREE CALL
+	vmem_xfree(kernel_arena, addrp, size);
 
 	return (0);
 }
