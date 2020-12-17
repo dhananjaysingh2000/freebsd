@@ -1521,10 +1521,10 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 				// not locking because this function seems to lock internally
 				pmap_demote_l2(kernel_pmap, pte, va);
 			}
-		} else if ((va & (64*1024 - 1)) == 0 && (pte & ATTR_CONTIGUOUS) != 0) {
+		} else if ((va & (64*1024 - 1)) == 0 && (*pte & ATTR_CONTIGUOUS) != 0) {
 			// This is the case where va corresponds to 64K page
 			// switching the bit so that in the next iteration the else branch is called
-			pte &= ~ATTR_CONTIGUOUS;
+			*pte &= ~ATTR_CONTIGUOUS;
 		} else {
 			// This is the case where va corresponds to 4K page
 			KASSERT(lvl == 3,
