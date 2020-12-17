@@ -1428,6 +1428,8 @@ pmap_kenter(vm_offset_t sva, vm_size_t size, vm_paddr_t pa, int mode)
 		    ("pmap_kenter: Invalid page entry, va: 0x%lx", va));
 		KASSERT(lvl == 2, ("pmap_kenter: Invalid level %d", lvl));
 		
+		// check to see if sva is at the start of a 2M mapping
+		// va check comes first, as it is checking the start
 		if (size >= L2_SIZE && (pa & L2_OFFSET) == 0 && (va & L2_OFFSET) == 0)
 		{
 			old_pde = pmap_load_store(pde, (pa & ~L2_OFFSET) | attr | L2_BLOCK);
@@ -1500,13 +1502,39 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 	va = sva;
 	while (size != 0) {
 		pte = pmap_pte(kernel_pmap, va, &lvl);
-		KASSERT(pte != NULL, ("Invalid page table, va: 0x%lx", va));
-		KASSERT(lvl == 3,
-		    ("Invalid device pagetable level: %d != 3", lvl));
-		pmap_clear(pte);
 
-		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
+		KASSERT(pte != NULL, ("Invalid page table, va: 0x%lx", va));
+		if ((va & L2_OFFSET) == 0) {
+			// This is the case where va corresponds to 2M page
+			KASSERT(lvl == 2,
+			    ("Invalid device pagetable level: %d != 2", lvl));
+
+			if (size >= L2_SIZE) {
+				PMAP_LOCK(kernel_pmap);
+				pmap_remove_kernel_l2(kernel_pmap, pte, va);
+				PMAP_UNLOCK(kernel_pmap);
+
+				size -= L2_SIZE;
+				va += L2_SIZE;
+			} else {
+				//demote super page
+				// not locking because this function seems to lock internally
+				pmap_demote_l2(kernel_pmap, pte, va);
+			}
+		} else if ((va & (64*1024 - 1)) == 0 && (pte & ATTR_CONTIGUOUS) != 0) {
+			// This is the case where va corresponds to 64K page
+			// switching the bit so that in the next iteration the else branch is called
+			pte &= ~ATTR_CONTIGUOUS;
+		} else {
+			// This is the case where va corresponds to 4K page
+			KASSERT(lvl == 3,
+			    ("Invalid device pagetable level: %d != 3", lvl));
+			pmap_clear(pte);
+
+			va += PAGE_SIZE;
+			size -= PAGE_SIZE;
+		}
+		
 	}
 	pmap_invalidate_range(kernel_pmap, sva, va);
 }
