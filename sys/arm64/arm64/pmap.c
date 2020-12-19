@@ -1503,24 +1503,32 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 	while (size != 0) {
 		pte = pmap_pte(kernel_pmap, va, &lvl);
 
+		printf("In pmap_kremove_device(): pte = %d \n", pte);
 		KASSERT(pte != NULL, ("Invalid page table, va: 0x%lx", va));
 		if (lvl == 2) {
 			// This is the case where va corresponds to 2M page
+			printf("Inside if block, lvl == 2\n");
 			desc = pmap_load(pte) & ATTR_DESCR_MASK;
 			KASSERT(desc == L2_BLOCK,
 			    ("Not in L2 Block: %#lx != L2_BLOCK", desc));
+			printf("desc = %#lx \n", desc);
 
 			if (size >= L2_SIZE && (va & L2_OFFSET) == 0) {
+				printf("size >= L2_SIZE and va is at the start of a 2M page"\n);
 				PMAP_LOCK(kernel_pmap);
+				printf("about to call pmap_remove_kernel_l2\n");
 				pmap_remove_kernel_l2(kernel_pmap, pte, va);
 				PMAP_UNLOCK(kernel_pmap);
 
+				printf("Successfully removed pte");
 				size -= L2_SIZE;
 				va += L2_SIZE;
 			} else {
+				printf("have to demote 2M page\n");
 				pt_entry_t *success;
 				//demote super page
 				PMAP_LOCK(kernel_pmap);
+				printf("Demoting 2M page, calling pmap_demote_l2\n");
 				success = pmap_demote_l2(kernel_pmap, pte, va);
 				PMAP_UNLOCK(kernel_pmap);
 				KASSERT(success != NULL, 
@@ -1528,41 +1536,49 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 			}
 		} else {
 			KASSERT(lvl == 3,
-			    ("Invalid device pagetable level: %d != 3", lvl));
+			    ("Invalid device pagetable level: %d != 3\n", lvl));
+			printf("Inside else block, lvl == 3\n");
 			desc = pmap_load(pte) & ATTR_DESCR_MASK;
 			KASSERT(desc == L3_PAGE,
 			    ("Not in L3 Page: %#lx != L2_BLOCK", desc));
+			printf("desc = %#lx \n", desc);
 
 			if ((pmap_load(pte) & ATTR_CONTIGUOUS) != 0) {
 				// This is the case where va corresponds to a 64K page
+				printf("Inside if block for va corresponding to 64K page i.e. contiguous bit has been set\n");
 				if (size >= (64*1024) && (va & (64*1024 - 1)) == 0) {
 					// This is the case where va is at the start of a 64K page
+					printf("size >= 64K and va is at the start of a 64K page\n");
 					for (int i = 0; i < 16; i++) {
 						pmap_clear(pte + i);
 					}
+					printf("cleared all the base pages\n");
 					va += 16 * PAGE_SIZE;
 					size -= 16 * PAGE_SIZE;
 				} else {
 					// cast va to (uintptr_t)
+					printf("va is in the middle of the 64K page or only part of the page is to be removed\n");
+					printf("Getting the starting address of the super page\n");
 					uintptr_t start = va;
 					while (!((start & (64*1024 - 1)) == 0)) {
 						start--;
 					}
 
 					// get starting page table entry
+					printf("Getting the starting pte of the super page, calling pmap_pte\n");
 					pt_entry_t *starting_pte = pmap_pte(kernel_pmap, start, &lvl);
 					// Switching off the bit that makes it a 64K page
 					*starting_pte &= ~ATTR_CONTIGUOUS;
 
 					// Making sure that there is no data race condition from concurrent threads trying to access these pages
 					pmap_clear_bits(starting_pte, ATTR_DESCR_VALID);
-					pmap_invalidate_range(kernel_pmap, start, va + size);
+					pmap_invalidate_range(kernel_pmap, start, start + 64*1024);
 
-					// Clearing and then setting the 4K pages to valid again
+					printf("clearing the base pages\n");
+					// setting the 4K pages to valid again
 					for (int i = 0; i < 16; i++) {
-						pmap_clear(starting_pte + i);
-						pt_entry_t new_pte = pmap_load(starting_pte + i);
-						new_pte |= ATTR_DESCR_VALID;
+						pt_entry_t base_pte = pmap_load(starting_pte + i);
+						base_pte |= ATTR_DESCR_VALID;
 					}
 				}
 			} else {
