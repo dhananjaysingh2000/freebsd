@@ -1543,8 +1543,8 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 					va += 16 * PAGE_SIZE;
 					size -= 16 * PAGE_SIZE;
 				} else {
-					// cast va to (uintptr_t *)
-					uintptr_t *start = va;
+					// cast va to (uintptr_t)
+					uintptr_t start = va;
 					while (!((start & (64*1024 - 1)) == 0)) {
 						start--;
 					}
