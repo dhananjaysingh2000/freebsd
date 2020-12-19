@@ -1508,7 +1508,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 			// This is the case where va corresponds to 2M page
 			desc = pmap_load(pte) & ATTR_DESCR_MASK;
 			KASSERT(desc == L2_BLOCK,
-			    ("Not in L2 Block: %d != L2_BLOCK", desc));
+			    ("Not in L2 Block: %#lx != L2_BLOCK", desc));
 
 			if (size >= L2_SIZE && (va & L2_OFFSET) == 0) {
 				PMAP_LOCK(kernel_pmap);
@@ -1531,7 +1531,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 			    ("Invalid device pagetable level: %d != 3", lvl));
 			desc = pmap_load(pte) & ATTR_DESCR_MASK;
 			KASSERT(desc == L3_PAGE,
-			    ("Not in L3 Page: %d != L2_BLOCK", desc));
+			    ("Not in L3 Page: %#lx != L2_BLOCK", desc));
 
 			if ((pmap_load(pte) & ATTR_CONTIGUOUS) != 0) {
 				// This is the case where va corresponds to a 64K page
@@ -1544,7 +1544,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 					size -= 16 * PAGE_SIZE;
 				} else {
 					// cast va to (uintptr_t *)
-					uintptr_t *start = &va;
+					uintptr_t *start = va;
 					while (!((start & (64*1024 - 1)) == 0)) {
 						start--;
 					}
@@ -1556,7 +1556,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 
 					// Making sure that there is no data race condition from concurrent threads trying to access these pages
 					pmap_clear_bits(starting_pte, ATTR_DESCR_VALID);
-					pmap_invalidate_range(pmap, start, va + size);
+					pmap_invalidate_range(kernel_pmap, start, va + size);
 
 					// Clearing and then setting the 4K pages to valid again
 					for (int i = 0; i < 16; i++) {
@@ -1572,7 +1572,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 				va += PAGE_SIZE;
 				size -= PAGE_SIZE;
 			}
-		
+		}
 	}
 	pmap_invalidate_range(kernel_pmap, sva, va);
 } 
