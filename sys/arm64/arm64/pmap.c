@@ -1490,7 +1490,7 @@ pmap_kremove(vm_offset_t va)
 void
 pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 {
-	pt_entry_t *pte;
+	pt_entry_t *pte, desc;
 	vm_offset_t va;
 	int lvl;
 
@@ -1504,12 +1504,13 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 		pte = pmap_pte(kernel_pmap, va, &lvl);
 
 		KASSERT(pte != NULL, ("Invalid page table, va: 0x%lx", va));
-		if ((va & L2_OFFSET) == 0) {
+		if (lvl == 2) {
 			// This is the case where va corresponds to 2M page
-			KASSERT(lvl == 2,
-			    ("Invalid device pagetable level: %d != 2", lvl));
+			desc = pmap_load(pte) & ATTR_DESCR_MASK;
+			KASSERT(desc == L2_BLOCK,
+			    ("Not in L2 Block: %d != L2_BLOCK", desc));
 
-			if (size >= L2_SIZE) {
+			if (size >= L2_SIZE && (va & L2_OFFSET) == 0) {
 				PMAP_LOCK(kernel_pmap);
 				pmap_remove_kernel_l2(kernel_pmap, pte, va);
 				PMAP_UNLOCK(kernel_pmap);
@@ -1517,27 +1518,64 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 				size -= L2_SIZE;
 				va += L2_SIZE;
 			} else {
+				pt_entry_t *success;
 				//demote super page
-				// not locking because this function seems to lock internally
-				pmap_demote_l2(kernel_pmap, pte, va);
+				PMAP_LOCK(kernel_pmap);
+				success = pmap_demote_l2(kernel_pmap, pte, va);
+				PMAP_UNLOCK(kernel_pmap);
+				KASSERT(success != NULL, 
+					("The demotion failed."));
 			}
-		} else if ((va & (64*1024 - 1)) == 0 && (*pte & ATTR_CONTIGUOUS) != 0) {
-			// This is the case where va corresponds to 64K page
-			// switching the bit so that in the next iteration the else branch is called
-			*pte &= ~ATTR_CONTIGUOUS;
 		} else {
-			// This is the case where va corresponds to 4K page
 			KASSERT(lvl == 3,
 			    ("Invalid device pagetable level: %d != 3", lvl));
-			pmap_clear(pte);
+			desc = pmap_load(pte) & ATTR_DESCR_MASK;
+			KASSERT(desc == L3_PAGE,
+			    ("Not in L3 Page: %d != L2_BLOCK", desc));
 
-			va += PAGE_SIZE;
-			size -= PAGE_SIZE;
-		}
+			if ((pmap_load(pte) & ATTR_CONTIGUOUS) != 0) {
+				// This is the case where va corresponds to a 64K page
+				if (size >= (64*1024) && (va & (64*1024 - 1)) == 0) {
+					// This is the case where va is at the start of a 64K page
+					for (int i = 0; i < 16; i++) {
+						pmap_clear(pte + i);
+					}
+					va += 16 * PAGE_SIZE;
+					size -= 16 * PAGE_SIZE;
+				} else {
+					// cast va to (uintptr_t *)
+					uintptr_t *start = &va;
+					while (!((start & (64*1024 - 1)) == 0)) {
+						start--;
+					}
+
+					// get starting page table entry
+					pt_entry_t *starting_pte = pmap_pte(kernel_pmap, *start, &lvl);
+					// Switching off the bit that makes it a 64K page
+					*starting_pte &= ~ATTR_CONTIGUOUS;
+
+					// Making sure that there is no data race condition from concurrent threads trying to access these pages
+					pmap_clear_bits(starting_pte, ATTR_DESCR_VALID);
+					pmap_invalidate_range(pmap, start, va + size);
+
+					// Clearing and then setting the 4K pages to valid again
+					for (int i = 0; i < 16; i++) {
+						pmap_clear(starting_pte + i);
+						pt_entry_t new_pte = pmap_load(starting_pte + i);
+						new_pte |= ATTR_DESCR_VALID;
+					}
+				}
+			} else {
+				// This is the case where va corresponds to 4K page
+				pmap_clear(pte);
+
+				va += PAGE_SIZE;
+				size -= PAGE_SIZE;
+			}
 		
 	}
 	pmap_invalidate_range(kernel_pmap, sva, va);
-}
+} 
 
 /*
  *	Used to map a range of physical addresses into kernel
