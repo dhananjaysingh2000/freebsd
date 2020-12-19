@@ -54,7 +54,7 @@ hello(struct thread *td, void *arg)
 	vm_page_t m;
 	int pflags = VM_ALLOC_NORMAL | VM_ALLOC_NOOBJ;
 
-#if 0
+#if 1
 	size = 64*1024; // 64 KB
 	alignment = 64*1024; // 64KB Super Page
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
@@ -92,7 +92,7 @@ hello(struct thread *td, void *arg)
  * Calling pmap_kremove_device() to remove exactly 2 2M super pages, from start to the end
  */
 #if 1
-	size = 4*1024*1024; // 4M
+	size = 2*1024*1024; // 4M
 	alignment = 2*1024*1024; // 2M Super page
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
 
