@@ -1503,7 +1503,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 	while (size != 0) {
 		pte = pmap_pte(kernel_pmap, va, &lvl);
 
-		printf("In pmap_kremove_device(): pte = %d \n", pte);
+		printf("In pmap_kremove_device(): pte = %p \n", pte);
 		KASSERT(pte != NULL, ("Invalid page table, va: 0x%lx", va));
 		if (lvl == 2) {
 			// This is the case where va corresponds to 2M page
@@ -1514,7 +1514,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 			printf("desc = %#lx \n", desc);
 
 			if (size >= L2_SIZE && (va & L2_OFFSET) == 0) {
-				printf("size >= L2_SIZE and va is at the start of a 2M page"\n);
+				printf("size >= L2_SIZE and va is at the start of a 2M page\n");
 				pmap_clear(pte);
 				pmap_invalidate_page(kernel_pmap, va);
 				PMAP_LOCK(kernel_pmap);
