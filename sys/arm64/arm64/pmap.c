@@ -1506,7 +1506,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 		printf("In pmap_kremove_device(): pte = %p \n", pte);
 		KASSERT(pte != NULL, ("Invalid page table, va: 0x%lx", va));
 		if (lvl == 2) {
-			// This is the case where va corresponds to 2M page
+			// This is the case where va corresponds to 2M page 
 			printf("Inside if block, lvl == 2\n");
 			desc = pmap_load(pte) & ATTR_DESCR_MASK;
 			KASSERT(desc == L2_BLOCK,
