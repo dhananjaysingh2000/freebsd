@@ -54,7 +54,7 @@ hello(struct thread *td, void *arg)
 	vm_page_t m;
 	int pflags = VM_ALLOC_NORMAL | VM_ALLOC_NOOBJ;
 
-#if 1
+#if 0
 	size = 64*1024; // 64 KB
 	alignment = 64*1024; // 64KB Super Page
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
