@@ -1515,6 +1515,8 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 
 			if (size >= L2_SIZE && (va & L2_OFFSET) == 0) {
 				printf("size >= L2_SIZE and va is at the start of a 2M page"\n);
+				pmap_clear(pte);
+				pmap_invalidate_page(kernel_pmap, va);
 				PMAP_LOCK(kernel_pmap);
 				printf("about to call pmap_remove_kernel_l2\n");
 				pmap_remove_kernel_l2(kernel_pmap, pte, va);
