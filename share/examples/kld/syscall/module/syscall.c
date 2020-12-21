@@ -89,10 +89,10 @@ hello(struct thread *td, void *arg)
 
 /**
  * Test case 1:
- * Calling pmap_kremove_device() to remove exactly 2 2M super pages, from start to the end
+ * Calling pmap_kremove_device() to remove exactly 1 2M superpage, from start to the end
  */
-#if 1
-	size = 2*1024*1024; // 4M
+#if 0
+	size = 2*1024*1024; // 2M
 	alignment = 2*1024*1024; // 2M Super page
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
 
@@ -123,6 +123,186 @@ hello(struct thread *td, void *arg)
 	printf("vmem_xfree() called\n");
 #endif
 
+/**
+ * Test case 2:
+ * Calling pmap_kremove_device() to remove exactly 1 64KB superpage, from start to the end
+ */
+#if 0
+	size = 64*1024; // 64 KB
+	alignment = 64*1024; // 64KB Super Page
+	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
+	
+	if (rv != 0) {
+		printf("virtual memory allocation failed../");
+		return 1;
+	}
+
+	m = vm_page_alloc_contig(NULL, 0, pflags, size/4096, 0, ~(vm_paddr_t) 0, alignment, 0, VM_MEMATTR_DEFAULT);
+
+	if (m == NULL) {
+		printf("page allocation failed...");
+		return 1;
+	}	
+
+	pmap_kenter(addrp, size, VM_PAGE_TO_PHYS(m), VM_MEMATTR_DEFAULT);
+	printf("hello kernel! Testing from Dhananjay. ADDRESS = %lx\n", addrp);
+
+	pmap_kremove_device(addrp, size);
+	printf("pmap_kremove_device() called\n");
+
+	for (int i = 0; i < size/4096; i++) {	
+		vm_page_free(m + i);
+	}
+	printf("vm_page_free() called\n");
+
+	// TODO: VMEM_XFREE CALL
+	vmem_xfree(kernel_arena, addrp, size);
+	printf("vmem_xfree() called\n");
+#endif
+
+/**
+ * Test case 3:
+ * Calling pmap_kremove_device() to remove 2M of mappings, starting from the middle of a 2M superpage
+ */
+#if 0
+	size = 4*1024*1024; // 4M
+	alignment = 2*1024*1024; // 2M Super page
+	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
+
+	if (rv != 0) {
+		printf("virtual memory allocation failed../");
+		return 1;
+	}
+
+	m = vm_page_alloc_contig(NULL, 0, pflags, size/4096, 0, ~(vm_paddr_t) 0, alignment, 0, VM_MEMATTR_DEFAULT);
+
+	if (m == NULL) {
+		printf("page allocation failed...");
+		return 1;
+	}	
+
+	pmap_kenter(addrp, size, VM_PAGE_TO_PHYS(m), VM_MEMATTR_DEFAULT);
+	printf("hello kernel! Testing from Dhananjay. ADDRESS = %lx\n", addrp);
+
+	pmap_kremove_device(addrp + 8, 2*1024*1024);
+	printf("pmap_kremove_device() called\n");
+
+	for (int i = 0; i < size/4096; i++) {	
+		vm_page_free(m + i);
+	}
+	printf("vm_page_free() called\n");
+
+	vmem_xfree(kernel_arena, addrp, size);
+	printf("vmem_xfree() called\n");
+#endif
+
+/**
+ * Test case 4:
+ * Calling pmap_kremove_device() to remove some page mappings from the start to the middle of a 2M superpage
+ */
+#if 0
+	size = 2*1024*1024; // 2M
+	alignment = 2*1024*1024; // 2M Super page
+	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
+
+	if (rv != 0) {
+		printf("virtual memory allocation failed../");
+		return 1;
+	}
+
+	m = vm_page_alloc_contig(NULL, 0, pflags, size/4096, 0, ~(vm_paddr_t) 0, alignment, 0, VM_MEMATTR_DEFAULT);
+
+	if (m == NULL) {
+		printf("page allocation failed...");
+		return 1;
+	}	
+
+	pmap_kenter(addrp, size, VM_PAGE_TO_PHYS(m), VM_MEMATTR_DEFAULT);
+	printf("hello kernel! Testing from Dhananjay. ADDRESS = %lx\n", addrp);
+
+	pmap_kremove_device(addrp, 1*1024*1024);
+	printf("pmap_kremove_device() called\n");
+
+	for (int i = 0; i < size/4096; i++) {	
+		vm_page_free(m + i);
+	}
+	printf("vm_page_free() called\n");
+
+	vmem_xfree(kernel_arena, addrp, size);
+	printf("vmem_xfree() called\n");
+#endif
+
+/**
+ * Test case 5:
+ * Calling pmap_kremove_device() to remove 64KB of mappings, starting from the middle of a 64KB superpage
+ */
+#if 0
+	size = 2*64*1024; // 2 64KB pages
+	alignment = 64*1024; // 64KB page alignment
+	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
+
+	if (rv != 0) {
+		printf("virtual memory allocation failed../");
+		return 1;
+	}
+
+	m = vm_page_alloc_contig(NULL, 0, pflags, size/4096, 0, ~(vm_paddr_t) 0, alignment, 0, VM_MEMATTR_DEFAULT);
+
+	if (m == NULL) {
+		printf("page allocation failed...");
+		return 1;
+	}	
+
+	pmap_kenter(addrp, size, VM_PAGE_TO_PHYS(m), VM_MEMATTR_DEFAULT);
+	printf("hello kernel! Testing from Dhananjay. ADDRESS = %lx\n", addrp);
+
+	pmap_kremove_device(addrp + 4, 64*1024);
+	printf("pmap_kremove_device() called\n");
+
+	for (int i = 0; i < size/4096; i++) {	
+		vm_page_free(m + i);
+	}
+	printf("vm_page_free() called\n");
+
+	vmem_xfree(kernel_arena, addrp, size);
+	printf("vmem_xfree() called\n");
+#endif
+
+/**
+ * Test case 6:
+ * Calling pmap_kremove_device() to remove some mappings from the start to the middle of a 64KB superpage
+ */
+#if 0
+	size = 64*1024; // one 64KB page
+	alignment = 64*1024; // 64KB Super page alignment
+	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
+
+	if (rv != 0) {
+		printf("virtual memory allocation failed../");
+		return 1;
+	}
+
+	m = vm_page_alloc_contig(NULL, 0, pflags, size/4096, 0, ~(vm_paddr_t) 0, alignment, 0, VM_MEMATTR_DEFAULT);
+
+	if (m == NULL) {
+		printf("page allocation failed...");
+		return 1;
+	}	
+
+	pmap_kenter(addrp, size, VM_PAGE_TO_PHYS(m), VM_MEMATTR_DEFAULT);
+	printf("hello kernel! Testing from Dhananjay. ADDRESS = %lx\n", addrp);
+
+	pmap_kremove_device(addrp, 32*1024);
+	printf("pmap_kremove_device() called\n");
+
+	for (int i = 0; i < size/4096; i++) {	
+		vm_page_free(m + i);
+	}
+	printf("vm_page_free() called\n");
+
+	vmem_xfree(kernel_arena, addrp, size);
+	printf("vmem_xfree() called\n");
+#endif
 
 	return (0);
 }
