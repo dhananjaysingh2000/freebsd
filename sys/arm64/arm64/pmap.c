@@ -1522,7 +1522,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 				pmap_remove_kernel_l2(kernel_pmap, pte, va);
 				PMAP_UNLOCK(kernel_pmap);
 
-				printf("Successfully removed pte");
+				printf("Successfully removed pte\n");
 				size -= L2_SIZE;
 				va += L2_SIZE;
 			} else {
