@@ -236,7 +236,7 @@ hello(struct thread *td, void *arg)
  * Test case 5:
  * Calling pmap_kremove_device() to remove 64KB of mappings, starting from the middle of a 64KB superpage
  */
-#if 1
+#if 0
 	size = 2*64*1024; // 2 64KB pages
 	alignment = 64*1024; // 64KB page alignment
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
@@ -272,7 +272,7 @@ hello(struct thread *td, void *arg)
  * Test case 6:
  * Calling pmap_kremove_device() to remove some mappings from the start to the middle of a 64KB superpage
  */
-#if 0
+#if 1
 	size = 64*1024; // one 64KB page 
 	alignment = 64*1024; // 64KB Super page alignment
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
