@@ -184,7 +184,7 @@ hello(struct thread *td, void *arg)
 	pmap_kenter(addrp, size, VM_PAGE_TO_PHYS(m), VM_MEMATTR_DEFAULT);
 	printf("hello kernel! Testing from Dhananjay. ADDRESS = %lx\n", addrp);
 
-	pmap_kremove_device(addrp + 8, 2*1024*1024);
+	pmap_kremove_device(addrp + 1024*1024, 2*1024*1024);
 	printf("pmap_kremove_device() called\n");
 
 	for (int i = 0; i < size/4096; i++) {	
