@@ -1574,7 +1574,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 
 					// Making sure that there is no data race condition from concurrent threads trying to access these pages
 					pmap_clear_bits(starting_pte, ATTR_DESCR_VALID);
-					pmap_invalidate_range(kernel_pmap, start, start + 64*1024);
+					pmap_invalidate_range(kernel_pmap, *start, *start + 64*1024);
 
 					printf("clearing the base pages\n");
 					// setting the 4K pages to valid again
