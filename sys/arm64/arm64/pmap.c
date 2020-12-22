@@ -1563,23 +1563,26 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 					printf("Getting the starting address of the super page\n");
 					uintptr_t start = va;
 					while (!((start & (64*1024 - 1)) == 0)) {
-						start-= 4*1024;
+						start -= 4*1024;
 					}
 
 					// get starting page table entry
 					printf("Getting the starting pte of the super page, calling pmap_pte\n");
 					pt_entry_t *starting_pte = pmap_pte(kernel_pmap, start, &lvl);
-					// Switching off the bit that makes it a 64K page
-					*starting_pte &= ~ATTR_CONTIGUOUS;
+					printf("Starting_pte of 64KB superpage = %p \n", starting_pte);
+					KASSERT(starting_pte != NULL, ("Invalid page table at 'start', start: 0x%lx", start));
 
 					// Making sure that there is no data race condition from concurrent threads trying to access these pages
 					pmap_clear_bits(starting_pte, ATTR_DESCR_VALID);
 					pmap_invalidate_range(kernel_pmap, start, start + 64*1024);
 
+					// Switching off the bit that makes it a 64K page
+					starting_pte &= ~ATTR_CONTIGUOUS;
+
 					printf("clearing the base pages\n");
 					// setting the 4K pages to valid again
 					for (int i = 0; i < 16; i++) {
-						pt_entry_t base_pte = pmap_load(starting_pte + i);
+						pt_entry_t *base_pte = starting_pte + i;
 						base_pte |= ATTR_DESCR_VALID;
 					}
 				}
