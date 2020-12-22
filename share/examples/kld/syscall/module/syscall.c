@@ -197,10 +197,10 @@ hello(struct thread *td, void *arg)
 #endif
 
 /**
- * Test case 5:
+ * Test case 4:
  * Calling pmap_kremove_device() to remove some page mappings from the start to the middle of a 2M superpage
  */
-#if 1
+#if 0
 	size = 2*1024*1024; // 2M
 	alignment = 2*1024*1024; // 2M Super page
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
@@ -236,7 +236,7 @@ hello(struct thread *td, void *arg)
  * Test case 5:
  * Calling pmap_kremove_device() to remove 64KB of mappings, starting from the middle of a 64KB superpage
  */
-#if 0
+#if 1
 	size = 2*64*1024; // 2 64KB pages
 	alignment = 64*1024; // 64KB page alignment
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
@@ -256,7 +256,7 @@ hello(struct thread *td, void *arg)
 	pmap_kenter(addrp, size, VM_PAGE_TO_PHYS(m), VM_MEMATTR_DEFAULT);
 	printf("hello kernel! Testing from Dhananjay. ADDRESS = %lx\n", addrp);
 
-	pmap_kremove_device(addrp + 4, 64*1024);
+	pmap_kremove_device(addrp + 32*1024, 64*1024);
 	printf("pmap_kremove_device() called\n");
 
 	for (int i = 0; i < size/4096; i++) {	
