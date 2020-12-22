@@ -1494,8 +1494,8 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 	vm_offset_t va;
 	int lvl;
 
-	KASSERT((sva & L3_OFFSET) == 0,
-	   ("pmap_kremove_device: Invalid virtual address"));
+	// KASSERT((sva & L3_OFFSET) == 0,
+	//    ("pmap_kremove_device: Invalid virtual address"));
 	KASSERT((size & PAGE_MASK) == 0,
 	    ("pmap_kremove_device: Mapping is not page-sized"));
 
