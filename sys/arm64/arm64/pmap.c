@@ -1577,13 +1577,13 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 					pmap_invalidate_range(kernel_pmap, start, start + 64*1024);
 
 					// Switching off the bit that makes it a 64K page
-					starting_pte &= ~ATTR_CONTIGUOUS;
+					*starting_pte &= ~ATTR_CONTIGUOUS;
 
 					printf("clearing the base pages\n");
 					// setting the 4K pages to valid again
 					for (int i = 0; i < 16; i++) {
 						pt_entry_t *base_pte = starting_pte + i;
-						base_pte |= ATTR_DESCR_VALID;
+						*base_pte |= ATTR_DESCR_VALID;
 					}
 				}
 			} else {
