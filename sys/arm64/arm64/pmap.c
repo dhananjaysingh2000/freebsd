@@ -1561,20 +1561,20 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 					// cast va to (uintptr_t)
 					printf("va is in the middle of the 64K page or only part of the page is to be removed\n");
 					printf("Getting the starting address of the super page\n");
-					uintptr_t *start = &va;
-					while (!((*start & (64*1024 - 1)) == 0)) {
+					uintptr_t *start = va;
+					while (!((start & (64*1024 - 1)) == 0)) {
 						start--;
 					}
 
 					// get starting page table entry
 					printf("Getting the starting pte of the super page, calling pmap_pte\n");
-					pt_entry_t *starting_pte = pmap_pte(kernel_pmap, *start, &lvl);
+					pt_entry_t *starting_pte = pmap_pte(kernel_pmap, start, &lvl);
 					// Switching off the bit that makes it a 64K page
 					*starting_pte &= ~ATTR_CONTIGUOUS;
 
 					// Making sure that there is no data race condition from concurrent threads trying to access these pages
 					pmap_clear_bits(starting_pte, ATTR_DESCR_VALID);
-					pmap_invalidate_range(kernel_pmap, *start, *start + 64*1024);
+					pmap_invalidate_range(kernel_pmap, start, start + 64*1024);
 
 					printf("clearing the base pages\n");
 					// setting the 4K pages to valid again
