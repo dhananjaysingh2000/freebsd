@@ -1568,7 +1568,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 
 					// get starting page table entry
 					printf("Getting the starting pte of the super page, calling pmap_pte\n");
-					pt_entry_t *starting_pte = pmap_pte(kernel_pmap, start, &lvl);
+					pt_entry_t *starting_pte = pmap_pte(kernel_pmap, *start, &lvl);
 					// Switching off the bit that makes it a 64K page
 					*starting_pte &= ~ATTR_CONTIGUOUS;
 
