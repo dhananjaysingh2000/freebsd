@@ -164,7 +164,7 @@ hello(struct thread *td, void *arg)
  * Test case 3:
  * Calling pmap_kremove_device() to remove 2M of mappings, starting from the middle of a 2M superpage
  */
-#if 1
+#if 0
 	size = 4*1024*1024; // 4M
 	alignment = 2*1024*1024; // 2M Super page
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
@@ -200,7 +200,7 @@ hello(struct thread *td, void *arg)
  * Test case 4:
  * Calling pmap_kremove_device() to remove some page mappings from the start to the middle of a 2M superpage
  */
-#if 0
+#if 1
 	size = 2*1024*1024; // 2M
 	alignment = 2*1024*1024; // 2M Super page
 	rv = vmem_xalloc(kernel_arena, size, alignment, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX, M_WAITOK | M_BESTFIT, &addrp);
