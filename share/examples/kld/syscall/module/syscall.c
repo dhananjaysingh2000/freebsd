@@ -197,7 +197,7 @@ hello(struct thread *td, void *arg)
 #endif
 
 /**
- * Test case 4:
+ * Test case 5:
  * Calling pmap_kremove_device() to remove some page mappings from the start to the middle of a 2M superpage
  */
 #if 1
