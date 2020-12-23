@@ -1558,7 +1558,6 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 					va += 16 * PAGE_SIZE;
 					size -= 16 * PAGE_SIZE;
 				} else {
-					// cast va to (uintptr_t)
 					printf("va is in the middle of the 64K page or only part of the page is to be removed\n");
 					printf("Getting the starting address of the super page\n");
 					vm_offset_t start = va;
@@ -1569,6 +1568,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 					printf("Getting the starting pte of the super page, calling pmap_pte\n");
 					// Can use a bit mask operation here instead, because that is more efficient - avoid conditional branches and memory accesses
 					pt_entry_t *starting_pte = pmap_pte(kernel_pmap, start, &lvl);
+
 					printf("Starting_pte of 64KB superpage = %p \n", starting_pte);
 					KASSERT(starting_pte != NULL, ("Invalid page table at 'start', start: 0x%lx", start));
 
