@@ -1562,7 +1562,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 					printf("va is in the middle of the 64K page or only part of the page is to be removed\n");
 					printf("Getting the starting address of the super page\n");
 					vm_offset_t start = va;
-					// Better than a while loop as it's much more efficient
+					// Better than a while loop as it's much more efficient 
 					start &= ~(64*1024 - 1);
 
 					// get starting page table entry
