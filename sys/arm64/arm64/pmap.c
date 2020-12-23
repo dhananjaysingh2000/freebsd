@@ -1558,24 +1558,45 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 					va += 16 * PAGE_SIZE;
 					size -= 16 * PAGE_SIZE;
 				} else {
-					// cast va to (uintptr_t)
 					printf("va is in the middle of the 64K page or only part of the page is to be removed\n");
 					printf("Getting the starting address of the super page\n");
 					vm_offset_t start = va;
-					// Better than a while loop as it's much more efficient
+					// Better than a while loop as it's MUCH more efficient
 					start &= ~(64*1024 - 1);
 
 					// get starting page table entry
-					printf("Getting the starting pte of the super page, calling pmap_pte\n");
-					// Can use a bit mask operation here instead, because that is more efficient - avoid conditional branches and memory accesses
-					pt_entry_t *starting_pte = pmap_pte(kernel_pmap, start, &lvl);
-					printf("Starting_pte of 64KB superpage = %p \n", starting_pte);
-					KASSERT(starting_pte != NULL, ("Invalid page table at 'start', start: 0x%lx", start));
+					// printf("Getting the starting pte of the super page, calling pmap_pte\n");
+					// // Can use a bit mask operation here instead, because that is more efficient - avoid conditional branches and memory accesses
+					// pt_entry_t *starting_pte = pmap_pte(kernel_pmap, start, &lvl);
+
+					// printf("Starting_pte of 64KB superpage = %p \n", starting_pte);
+					// KASSERT(starting_pte != NULL, ("Invalid page table at 'start', start: 0x%lx", start));
+
+					// // Making sure that there is no data race condition from concurrent threads trying to access these pages
+					// for (int j = 0; j < 16; j++) {
+					// 	// Switching off the bit that makes it a 64K page
+					// 	pmap_clear_bits(starting_pte + j, ATTR_DESCR_VALID | ATTR_CONTIGUOUS);
+					// }
+					
+					// pmap_invalidate_range(kernel_pmap, start, start + 64*1024);
+
+					// printf("clearing the base pages\n");
+					// // setting the 4K pages to valid again
+					// for (int i = 0; i < 16; i++) {
+					// 	pmap_set_bits(starting_pte + i, ATTR_DESCR_VALID);
+					// }
+
+					// get starting page table entry
+					printf("Getting the starting pte of the super page\n");
+					pte = VM_PAGE_TO_PHYS(start) & ~(64*1024 - 1);
+
+					printf("Starting_pte of 64KB superpage = %p \n", pte);
+					KASSERT(pte != NULL, ("Invalid page table at 'start', start: 0x%lx", start));
 
 					// Making sure that there is no data race condition from concurrent threads trying to access these pages
 					for (int j = 0; j < 16; j++) {
 						// Switching off the bit that makes it a 64K page
-						pmap_clear_bits(starting_pte + j, ATTR_DESCR_VALID | ATTR_CONTIGUOUS);
+						pmap_clear_bits(pte + j, ATTR_DESCR_VALID | ATTR_CONTIGUOUS);
 					}
 					
 					pmap_invalidate_range(kernel_pmap, start, start + 64*1024);
@@ -1583,7 +1604,7 @@ pmap_kremove_device(vm_offset_t sva, vm_size_t size)
 					printf("clearing the base pages\n");
 					// setting the 4K pages to valid again
 					for (int i = 0; i < 16; i++) {
-						pmap_set_bits(starting_pte + i, ATTR_DESCR_VALID);
+						pmap_set_bits(pte + i, ATTR_DESCR_VALID);
 					}
 				}
 			} else {
