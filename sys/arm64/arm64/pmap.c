@@ -6268,6 +6268,7 @@ pmap_demote_l3(pmap_t pmap, pt_entry_t *l3, vm_offset_t va)
 {
 	printf("va is in the middle of the 64K page or only part of the page is to be removed\n");
 	printf("Getting the starting address of the super page\n");
+	int lvl;
 	vm_offset_t start = va;
 	// Better than a while loop as it's much more efficient 
 	start &= ~(64*1024 - 1);
@@ -6279,6 +6280,8 @@ pmap_demote_l3(pmap_t pmap, pt_entry_t *l3, vm_offset_t va)
 
 	printf("Starting_pte of 64KB superpage = %p \n", starting_pte);
 	KASSERT(starting_pte != NULL, ("Invalid page table at 'start', start: 0x%lx", start));
+	KASSERT(lvl == 3, 
+		("Invalid lvl, lvl should be 3"));
 
 	// Making sure that there is no data race condition from concurrent threads trying to access these pages
 	for (int j = 0; j < 16; j++) {
